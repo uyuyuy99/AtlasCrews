@@ -1,0 +1,33 @@
+bandit:
+  name: "&dBandit"
+  icon: BOW
+  icon-glow: false
+  buffs:
+    - resistance1
+    - bow5
+  crew-specific-eco-items:
+    - enchanted_diamond
+  crew-specific-eco-armor:
+    - slayer
+  permission: "atlas.crews.bandit"
+plunderer:
+  name: "&bPlunderer"
+  icon: DIAMOND_SWORD
+  icon-glow: false
+  buffs:
+    - speed2
+    - sword5
+guard:
+  name: "&9Guard"
+  icon: SHIELD
+  icon-glow: false
+  buffs:
+    - maxhealth10
+    - slowness1
+rabbit:
+  name: "&aRabbit"
+  icon: RABBIT_FOOT
+  icon-glow: false
+  buffs:
+    - jumpboost2
+    - luck

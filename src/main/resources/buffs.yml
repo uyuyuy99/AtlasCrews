@@ -1,0 +1,50 @@
+# This config creates buffs that can be used for the crews in crews.yml
+#
+# The "type" can be sword_damage, bow_damage, potion_effect, or attribute
+# For potion_effect, you must specify the potion (see examples below)
+# For attribute, you must specify the attribute (see examples below)
+#
+# The "modifier" works as follows:
+#  - For sword_damage and bow_damage, it increases the damage by X percent
+#  - For potion_effect, it acts as the potion effect amplifier
+#        (so "modifier: 1" would make the potion effect level II)
+# - For attribute, it adds X to the player's attribute (see examples below)
+
+sword5:
+  name: "Deal +5% Sword Damage"
+  type: sword_damage
+  modifier: 5
+bow5:
+  name: "Deal +5% Bow Damage"
+  type: bow_damage
+  modifier: 5
+speed2:
+  name: "Permanent Speed II"
+  type: potion_effect
+  potion: speed
+  modifier: 1
+resistance1:
+  name: "Permanent Resistance I"
+  type: potion_effect
+  potion: resistance
+  modifier: 0
+maxhealth10:
+  name: "+10 Max Health"
+  type: attribute
+  attribute: generic.max_health
+  modifier: 10
+slowness1:
+  name: "Permanent Slowness I"
+  type: potion_effect
+  potion: slowness
+  modifier: 0
+jumpboost2:
+  name: "Permanent Jump Boost II"
+  type: potion_effect
+  potion: jump_boost
+  modifier: 1
+luck:
+  name: "+100 Luck"
+  type: attribute
+  attribute: generic.luck
+  modifier: 100
