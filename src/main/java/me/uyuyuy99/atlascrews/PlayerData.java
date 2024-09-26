@@ -2,9 +2,13 @@ package me.uyuyuy99.atlascrews;
 
 import lombok.Data;
 import me.uyuyuy99.atlascrews.crew.Crew;
+import me.uyuyuy99.atlascrews.util.CC;
 import me.uyuyuy99.atlascrews.util.Json;
 import me.uyuyuy99.atlascrews.util.PersistentUtils;
+import net.splodgebox.elitemasks.EliteAPI;
+import net.splodgebox.elitepets.ElitePetsAPI;
 import org.bukkit.Material;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -62,8 +66,38 @@ public class PlayerData {
         return null;
     }
 
-    // If player is wearing eco armor specific to his crew, it will remove it and place in his inventory
-    public void removeEcoArmor() {
+    // Returns NULL if player can use the pet, else returns the crew needed to use it
+    public Crew crewNeededForPet(String pet) {
+        // If the player's crew lists it as a crew-specific pet, then they can use it
+        if (crew != null && crew.hasPet(pet)) {
+            return null;
+        }
+        // Otherwise, if any other crews have it as a pet, then they can't use it
+        for (Crew c : Atlas.plugin().crews().getCrews()) {
+            if (c.hasPet(pet)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    // Returns NULL if player can use the mask, else returns the crew needed to use it
+    public Crew crewNeededForMask(String mask) {
+        // If the player's crew lists it as a crew-specific mask, then they can use it
+        if (crew != null && crew.hasMask(mask)) {
+            return null;
+        }
+        // Otherwise, if any other crews have it as a mask, then they can't use it
+        for (Crew c : Atlas.plugin().crews().getCrews()) {
+            if (c.hasMask(mask)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    // If player is wearing eco armor or mask specific to his crew, it will remove it and place in his inventory
+    public void removeEcoArmorAndMasks() {
         if (crew == null) return;
 
         Player player = Atlas.plugin().getServer().getPlayer(uuid);
@@ -85,6 +119,14 @@ public class PlayerData {
                     armorContents[i] = new ItemStack(Material.AIR);
                 }
             }
+            else if (EliteAPI.hasMask(armorPiece)) {
+                String mask = EliteAPI.getMaskName(armorPiece);
+
+                if (crew.hasMask(mask)) {
+                    returnToInv.add(armorPiece);
+                    armorContents[i] = new ItemStack(Material.AIR);
+                }
+            }
         }
 
         inv.setArmorContents(armorContents);
@@ -94,6 +136,31 @@ public class PlayerData {
         for (ItemStack leftover : leftovers.values()) {
             player.getWorld().dropItem(player.getLocation(), leftover);
         }
+    }
+
+    // Checks if user has pets in inventory that prevent him from changing crews
+    // Returns TRUE if user can safely change crews
+    public boolean performPetCheck(Player player, CommandSender sender) {
+        if (crew != null) {
+            for (ItemStack i : player.getInventory().getContents()) {
+                if (ElitePetsAPI.getPetAPI().isPet(i) && crew.hasPet(ElitePetsAPI.getPetAPI().getPet(i).getName())) {
+                    player.sendMessage(CC.format(Atlas.plugin().getConfig().getString("messages.remove-your-pets")
+                            .replace("%crew%", crew.getName())));
+
+                    if (sender != null && (player != sender)) {
+                        sender.sendMessage(CC.format(Atlas.plugin().getConfig().getString("messages.remove-their-pets")
+                                .replace("%player%", player.getName())
+                                .replace("%crew%", crew.getName())));
+                    }
+
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    public boolean performPetCheck(Player player) {
+        return performPetCheck(player, null);
     }
 
 }

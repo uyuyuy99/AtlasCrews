@@ -9,6 +9,10 @@ bandit:
     - enchanted_diamond
   crew-specific-eco-armor:
     - slayer
+  crew-specific-pets:
+    - slime
+  crew-specific-masks:
+    - monopoly
   permission: "atlas.crews.bandit"
 plunderer:
   name: "&bPlunderer"

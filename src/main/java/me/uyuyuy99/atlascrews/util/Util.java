@@ -1,23 +1,45 @@
 package me.uyuyuy99.atlascrews.util;
 
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import me.uyuyuy99.atlascrews.Atlas;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.craftbukkit.libs.org.apache.commons.codec.binary.Base64;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.profile.PlayerProfile;
+import org.bukkit.potion.PotionEffectType;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.util.List;
-import java.util.UUID;
+import java.lang.reflect.Field;
+import java.util.*;
 
 public class Util {
+
+    private static Map<String, PotionEffectType> potionNameMap = new HashMap<String, PotionEffectType>() {{
+       put("slowness", PotionEffectType.SLOW);
+       put("haste", PotionEffectType.FAST_DIGGING);
+       put("mining_fatigue", PotionEffectType.SLOW_DIGGING);
+       put("strength", PotionEffectType.INCREASE_DAMAGE);
+       put("instant_health", PotionEffectType.HEAL);
+       put("instant_damage", PotionEffectType.HARM);
+       put("jump_boost", PotionEffectType.JUMP);
+       put("nausea", PotionEffectType.CONFUSION);
+       put("resistance", PotionEffectType.DAMAGE_RESISTANCE);
+    }};
+
+    public static PotionEffectType getPotionEFfectTypeFromName(String name) {
+        PotionEffectType type = PotionEffectType.getByName(name);
+
+        if (type != null) {
+            return type;
+        }
+
+        return potionNameMap.get(name.toLowerCase());
+    }
 
     public static void addGlow(ItemStack item) {
         item.addUnsafeEnchantment(Enchantment.SILK_TOUCH, 69);
@@ -27,20 +49,24 @@ public class Util {
     }
 
     public static void setHeadTexture(ItemStack head, String url) {
-        if (url.isEmpty()) {
+        if(url.isEmpty()) {
             return;
         }
 
         SkullMeta headMeta = (SkullMeta) head.getItemMeta();
-        PlayerProfile profile = Bukkit.createPlayerProfile(UUID.randomUUID());
+        GameProfile profile = new GameProfile(UUID.randomUUID(), null);
+        byte[] encodedData = Base64.encodeBase64(String.format("{textures:{SKIN:{url:\"%s\"}}}", "http://textures.minecraft.net/texture/" + url).getBytes());
+        profile.getProperties().put("textures", new Property("textures", new String(encodedData)));
 
+        Field profileField;
         try {
-            profile.getTextures().setSkin(URI.create("http://textures.minecraft.net/texture/" + url).toURL());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+            profileField = headMeta.getClass().getDeclaredField("profile");
+            profileField.setAccessible(true);
+            profileField.set(headMeta, profile);
+        } catch (NoSuchFieldException | IllegalArgumentException | IllegalAccessException e1) {
+            e1.printStackTrace();
         }
 
-        headMeta.setOwnerProfile(profile);
         head.setItemMeta(headMeta);
     }
 

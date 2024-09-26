@@ -1,33 +1,25 @@
 messages:
   changed-crew: "&7Your atlas has changed to: %crew%"
   changed-other-crew: "&7You changed the atlas of &f%player% &7to: %crew%"
+  already-have-crew: "&7You are already using the %crew% &7atlas!"
+  remove-your-pets: "&cYou must drop your atlas-specific pets before you change your atlas."
+  remove-their-pets: "&c%player% must drop their atlas-specific pets before their atlas can change."
   reset-crew: "&7Your atlas has been reset! Type &a/atlas &7to pick a new one."
   reset-other-crew: "&7You reset the atlas of &f%player%"
   must-reset-crew: "&cYou must reset your atlas before choosing another one!"
   already-reset: "&7Your atlas is already reset! Use &a/atlas &7to choose one."
-  gave-token: "&f%player% &7has been given an Atlas Reset Token"
+  gave-token: "&f%player% &7has been given a %crew% &7Atlas Token"
   cant-use-eco-item: "&cYour atlas must be %crew% &cto use that item!"
   cant-use-eco-armor: "&cYour atlas must be %crew% &cto equip that armor!"
+  cant-use-pet: "&cYour atlas must be %crew% &cto use that pet!"
+  cant-use-mask: "&cYour atlas must be %crew% &cto use that mask!"
   cant-choose-crew: "&cYou don't have permission to choose that crew!"
 options:
-  crew-reset-item: EMERALD
-  crew-reset-item-name: "&aATLAS ARMORY RESET"
-  crew-reset-item-lore:
-    - "&7Use this to reset your Atlas."
-gui:
-  title: "&8Atlas"
-  item-text:
-    - "&8» %crew% &fAtlas &8«"
+  crew-item: EMERALD
+  crew-item-name: "&f&lClass: %crew%"
+  crew-item-lore-prefix:
+    - "&fBuffs:"
+  crew-item-lore-buff: "&f • %buff%"
+  crew-item-lore-suffix:
     - " "
-    - "&fChoose wisely. Each atlas has its own special"
-    - "&fattributes that give you positive buffs."
-    - " "
-    - "%crew% Buffs"
-  item-text-buff: "&f • %buff%"
-  # This is the visual layout of the crews GUI. Every line is a new row.
-  # Every 'A' represents a different atlas (crew).
-  layout:
-    - "         "
-    - "  AAAAA  "
-    - "         "
-  filler-icon: "AIR"
+    - "&7&lRight-click to choose this class"

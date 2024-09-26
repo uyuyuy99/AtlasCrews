@@ -1,23 +1,18 @@
 package me.uyuyuy99.atlascrews.crew;
 
-import de.themoep.inventorygui.InventoryGui;
-import de.themoep.inventorygui.StaticGuiElement;
 import dev.jorel.commandapi.arguments.Argument;
-import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.CustomArgument;
-import dev.jorel.commandapi.arguments.StringArgument;
 import me.uyuyuy99.atlascrews.Atlas;
 import me.uyuyuy99.atlascrews.Buff;
 import me.uyuyuy99.atlascrews.PlayerData;
 import me.uyuyuy99.atlascrews.util.CC;
 import me.uyuyuy99.atlascrews.util.Util;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
+import net.minecraft.server.v1_15_R1.ArgumentMobEffect;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
@@ -28,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 
 public class CrewManager {
 
@@ -39,8 +33,6 @@ public class CrewManager {
 
     private List<Crew> crewList = new ArrayList<>();
     private List<Buff> buffList = new ArrayList<>();
-
-    private InventoryGui gui;
 
     public CrewManager(Atlas plugin) {
         this.plugin = plugin;
@@ -80,12 +72,6 @@ public class CrewManager {
 
     public List<Crew> getCrews() {
         return crewList;
-    }
-
-    public void openGui(Player player) {
-        if (gui != null) {
-            gui.show(player);
-        }
     }
 
     // Load buffs & crews from config files, and sets up the GUI
@@ -128,10 +114,10 @@ public class CrewManager {
             buff.setModifier(section.getDouble("modifier", 0));
 
             if (buff.getType() == Buff.Type.POTION_EFFECT) {
-                buff.setPotionEffectType(PotionEffectType.getByKey(NamespacedKey.fromString(section.getString("potion"))));
+                buff.setPotionEffectType(Util.getPotionEFfectTypeFromName(section.getString("potion")));
             }
             if (buff.getType() == Buff.Type.ATTRIBUTE) {
-                buff.setAttribute(Registry.ATTRIBUTE.get(NamespacedKey.fromString(section.getString("attribute"))));
+                buff.setAttribute(Attribute.valueOf(section.getString("attribute").replace(".", "_").toUpperCase()));
             }
 
             buffList.add(buff);
@@ -159,6 +145,8 @@ public class CrewManager {
 
             if (section.isSet("crew-specific-eco-items")) crew.setEcoItems(section.getStringList("crew-specific-eco-items"));
             if (section.isSet("crew-specific-eco-armor")) crew.setEcoArmors(section.getStringList("crew-specific-eco-armor"));
+            if (section.isSet("crew-specific-pets")) crew.setPets(section.getStringList("crew-specific-pets"));
+            if (section.isSet("crew-specific-masks")) crew.setMasks(section.getStringList("crew-specific-masks"));
             if (section.isSet("permission")) crew.setPermission(section.getString("permission"));
 
             crewList.add(crew);
@@ -176,59 +164,21 @@ public class CrewManager {
             }
             iter.set(line);
         }
-
-        gui = new InventoryGui(plugin, plugin.getConfig().getString("gui.title"), layout.toArray(new String[0]));
-        gui.setFiller(Util.getIconFromConfig("gui.filler-icon"));
-
-        slotChar = 'B';
-
-        for (Crew crew : crewList) {
-            List<String> text = plugin.getConfig().getStringList("gui.item-text");
-            text.replaceAll(s -> s.replace("%crew%", crew.getName()));
-            for (Buff buff : crew.getBuffs()) {
-                text.add(plugin.getConfig().getString("gui.item-text-buff").replace("%buff%", buff.getName()));
-            }
-            text = CC.format(text);
-
-            gui.addElement(new StaticGuiElement(slotChar++,
-                    crew.getIcon(),
-                    click -> {
-                        if (click.getWhoClicked() instanceof Player) {
-                            Player player = (Player) click.getWhoClicked();
-                            String permission = crew.getPermission();
-
-                            if (permission != null && !player.hasPermission(permission)) {
-                                player.sendMessage(CC.format(plugin.getConfig().getString("messages.cant-choose-crew")));
-                            } else {
-                                PlayerData playerData = plugin.getPlayerData(player);
-                                playerData.removeEcoArmor();
-                                playerData.setCrew(crew);
-                                plugin.removeAttributeModifiers(player);
-                                plugin.applyAttributeModifiers(player);
-                                player.sendMessage(CC.format(plugin.getConfig().getString("messages.changed-crew").replace("%crew%", crew.getName())));
-                                click.getGui().close(player);
-                            }
-                        }
-                        return true;
-                    },
-                    text.toArray(new String[0])
-            ));
-        }
     }
 
     // Autofill suggestions for commands (lists the available crews)
-    public Argument<Crew> cmdArg(String nodeName) {
-        return new CustomArgument<>(new StringArgument(nodeName), info -> {
-            Crew crew = getCrew(info.input());
+    public Argument cmdArg(String nodeName) {
+        return new CustomArgument<>(nodeName, info -> {
+            Crew crew = getCrew(info);
 
             if (crew == null) {
-                throw CustomArgument.CustomArgumentException.fromMessageBuilder(new CustomArgument.MessageBuilder("Unknown crew: ").appendArgInput());
+                throw new CustomArgument.CustomArgumentException("Unknown crew: " + info);
             } else {
                 return crew;
             }
-        }).replaceSuggestions(ArgumentSuggestions.strings(info ->
+        }).overrideSuggestions(info ->
                 crewList.stream().map(Crew::getId).toArray(String[]::new)
-        ));
+        );
     }
 
 }

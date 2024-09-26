@@ -1,8 +1,9 @@
 name: Atlas
 version: '${project.version}'
 main: me.uyuyuy99.atlascrews.Atlas
-api-version: 1.20
+api-version: 1.15
 depend:
+  - CommandAPI
   - PlaceholderAPI
-  - EcoItems
-  - EcoArmor
+#  - EcoItems
+#  - EcoArmor

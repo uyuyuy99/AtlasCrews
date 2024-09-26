@@ -1,18 +1,13 @@
 package me.uyuyuy99.atlascrews.crew;
 
 import com.google.gson.*;
-import dev.jorel.commandapi.arguments.Argument;
-import dev.jorel.commandapi.arguments.ArgumentSuggestions;
-import dev.jorel.commandapi.arguments.CustomArgument;
-import dev.jorel.commandapi.arguments.StringArgument;
 import lombok.Data;
 import me.uyuyuy99.atlascrews.Atlas;
 import me.uyuyuy99.atlascrews.Buff;
-import me.uyuyuy99.atlascrews.util.PersistentUtils;
+import me.uyuyuy99.atlascrews.util.Util;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -27,6 +22,8 @@ public class Crew {
     private List<Buff> buffs = new ArrayList<>();
     private List<String> ecoItems = new ArrayList<>();
     private List<String> ecoArmors = new ArrayList<>();
+    private List<String> pets = new ArrayList<>();
+    private List<String> masks = new ArrayList<>();
     private String permission;
 
     public Crew(String id) {
@@ -39,6 +36,14 @@ public class Crew {
 
     public boolean hasEcoArmor(String ecoArmor) {
         return ecoArmors.contains(ecoArmor);
+    }
+
+    public boolean hasPet(String pet) {
+        return pets.contains(pet);
+    }
+
+    public boolean hasMask(String mask) {
+        return masks.contains(mask);
     }
 
     public static class Serializer implements JsonSerializer<Crew>, JsonDeserializer<Crew> {

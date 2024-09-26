@@ -4,6 +4,9 @@ import me.uyuyuy99.atlascrews.crew.Crew;
 import me.uyuyuy99.atlascrews.event.armor.ArmorEquipEvent;
 import me.uyuyuy99.atlascrews.util.CC;
 import me.uyuyuy99.atlascrews.util.PersistentUtils;
+import net.splodgebox.elitemasks.EliteAPI;
+import net.splodgebox.elitepets.ElitePetsAPI;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,6 +14,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
@@ -56,19 +60,22 @@ public class Listeners implements Listener {
 
         if (item == null) return;
 
-        ItemMeta meta = item.hasItemMeta() ? item.getItemMeta() : null;
+        if (PersistentUtils.hasKey(item, Atlas.CREW_TOKEN_KEY)) {
+            Crew crew = plugin.crews().getCrew(PersistentUtils.getKey(item, Atlas.CREW_TOKEN_KEY));
 
-        if (meta != null && meta.hasDisplayName() && meta.getDisplayName().equals(CC.format(plugin.getConfig().getString("options.crew-reset-item-name")))) {
-            if (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK) {
+            if (crew != null && action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK) {
                 PlayerData playerData = plugin.getPlayerData(player);
 
-                if (playerData.getCrew() == null) {
-                    player.sendMessage(CC.format(plugin.getConfig().getString("messages.already-reset")));
-                } else {
-                    playerData.removeEcoArmor();
-                    playerData.setCrew(null);
+                if (crew.equals(playerData.getCrew())) {
+                    player.sendMessage(CC.format(plugin.getConfig().getString("messages.already-have-crew")
+                            .replace("%crew%", crew.getName())));
+                } else if (playerData.performPetCheck(player)) {
+                    playerData.removeEcoArmorAndMasks();
+                    playerData.setCrew(crew);
                     plugin.removeAttributeModifiers(player);
-                    player.sendMessage(CC.format(plugin.getConfig().getString("messages.reset-crew")));
+                    plugin.applyAttributeModifiers(player);
+                    player.sendMessage(CC.format(plugin.getConfig().getString("messages.changed-crew")
+                            .replace("%crew%", crew.getName())));
                     item.setAmount(item.getAmount() - 1);
                 }
             }
@@ -99,6 +106,17 @@ public class Listeners implements Listener {
             if (crewNeeded != null) {
                 event.setCancelled(true);
                 player.sendMessage(CC.format(plugin.getConfig().getString("messages.cant-use-eco-armor")
+                        .replace("%crew%", crewNeeded.getName())));
+            }
+        }
+
+        if (EliteAPI.hasMask(armor)) {
+            PlayerData playerData = plugin.getPlayerData(player);
+            Crew crewNeeded = playerData.crewNeededForMask(EliteAPI.getMaskName(armor));
+
+            if (crewNeeded != null) {
+                event.setCancelled(true);
+                player.sendMessage(CC.format(plugin.getConfig().getString("messages.cant-use-mask")
                         .replace("%crew%", crewNeeded.getName())));
             }
         }
@@ -145,13 +163,49 @@ public class Listeners implements Listener {
                 if (crew != null) {
                     for (Buff buff : crew.getBuffs()) {
                         if (buff.getType() == Buff.Type.BOW_DAMAGE) {
-                            System.out.println("Modifier: " + (1d + (buff.getModifier() / 100)));
-                            System.out.println("Before: " + event.getDamage());
+//                            System.out.println("Modifier: " + (1d + (buff.getModifier() / 100)));
+//                            System.out.println("Before: " + event.getDamage());
                             event.setDamage(event.getDamage() * (1d + (buff.getModifier() / 100)));
-                            System.out.println("After: " + event.getDamage());
+//                            System.out.println("After: " + event.getDamage());
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onInvClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+
+        Player player = (Player) event.getWhoClicked();
+        ItemStack item = event.getCurrentItem();
+
+        if (ElitePetsAPI.getPetAPI().isPet(item)) {
+            PlayerData playerData = plugin.getPlayerData(player);
+            Crew crewNeeded = playerData.crewNeededForPet(ElitePetsAPI.getPetAPI().getPet(item).getName());
+
+            if (crewNeeded != null) {
+                event.setCancelled(true);
+                player.sendMessage(CC.format(plugin.getConfig().getString("messages.cant-use-pet")
+                        .replace("%crew%", crewNeeded.getName())));
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onItemPickup(EntityPickupItemEvent event) {
+        if (!(event.getEntity() instanceof Player)) return;
+
+        Player player = (Player) event.getEntity();
+        ItemStack item = event.getItem().getItemStack();
+
+        if (ElitePetsAPI.getPetAPI().isPet(item)) {
+            PlayerData playerData = plugin.getPlayerData(player);
+            Crew crewNeeded = playerData.crewNeededForPet(ElitePetsAPI.getPetAPI().getPet(item).getName());
+
+            if (crewNeeded != null) {
+                event.setCancelled(true);
             }
         }
     }
